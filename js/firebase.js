@@ -275,16 +275,24 @@ export async function getAdminCompletionStats() {
   const completedCounts = {}; // hwId -> count
   const studentStats = {}; // uid -> { name, completedCount }
   
+  const hwIds = new Set(hwSnap.docs.map(d => d.id));
+  
   await Promise.all(studentUsers.map(async (u) => {
     const cSnap = await getDocs(query(col(`completions/${u.id}/items`), where('isDone', '==', true)));
     // [BUG FIX] users collection เก็บ displayName ไม่ใช่ firstName/lastName (field เหล่านั้นอยู่ใน students collection)
-    studentStats[u.id] = { name: u.displayName || u.email || `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(), completedCount: cSnap.docs.length };
+    let validCompletions = 0;
     
     cSnap.docs.forEach(d => {
       const hwId = d.id;
-      if (!completedCounts[hwId]) completedCounts[hwId] = 0;
-      completedCounts[hwId]++;
+      // Only count if the homework still exists
+      if (hwIds.has(hwId)) {
+        validCompletions++;
+        if (!completedCounts[hwId]) completedCounts[hwId] = 0;
+        completedCounts[hwId]++;
+      }
     });
+    
+    studentStats[u.id] = { name: u.displayName || u.email || `${u.firstName ?? ''} ${u.lastName ?? ''}`.trim(), completedCount: validCompletions };
   }));
 
   return { totalStudents, totalHomeworks, completedCounts, activeStudentIds, studentStats };

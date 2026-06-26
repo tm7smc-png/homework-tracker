@@ -100,13 +100,9 @@ export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   try {
-    const isMobileOrPWA = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    if (isMobileOrPWA) {
-      // Use redirect on mobile/PWA to avoid popup blocking/hanging issues
-      await signInWithRedirect(auth, provider);
-    } else {
-      await signInWithPopup(auth, provider);
-    }
+    // Use redirect for all devices to prevent COOP (Cross-Origin-Opener-Policy) errors
+    // and popup blocking issues in strict environments (like Vercel).
+    await signInWithRedirect(auth, provider);
   } catch (err) {
     throw err;
   }
