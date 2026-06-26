@@ -1,4 +1,4 @@
-const CACHE_NAME = 'homework-tracker-v4';
+const CACHE_NAME = 'homework-tracker-v5';
 const urlsToCache = [
   '/',
   '/index.html',

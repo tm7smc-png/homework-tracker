@@ -129,16 +129,40 @@ function initAdminTabs() {
   }
 }
 
+document.getElementById('refresh-analytics-btn')?.addEventListener('click', () => {
+  renderAnalyticsTab(true);
+});
+
 // ══════════════════════════════════════════════════════════
 //  ANALYTICS TAB
 // ══════════════════════════════════════════════════════════
 
-async function renderAnalyticsTab() {
+let _cachedAnalytics = null;
+let _lastAnalyticsFetch = 0;
+
+async function renderAnalyticsTab(forceRefresh = false) {
   const tbody = document.getElementById('top-students-tbody');
-  if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-500">กำลังโหลดข้อมูล...</td></tr>`;
+  
+  if (!forceRefresh && _cachedAnalytics && (Date.now() - _lastAnalyticsFetch < 2 * 60 * 1000)) {
+    // Use cached data if within 2 minutes
+    renderAnalyticsUI(_cachedAnalytics, tbody);
+    return;
+  }
+
+  if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-slate-500"><div class="flex justify-center items-center gap-2"><div class="loader-sm"></div> กำลังโหลดข้อมูล (อาจใช้เวลาสักครู่)...</div></td></tr>`;
 
   try {
     const stats = await getAdminCompletionStats();
+    _cachedAnalytics = stats;
+    _lastAnalyticsFetch = Date.now();
+    renderAnalyticsUI(stats, tbody);
+  } catch (err) {
+    console.error("Failed to load analytics", err);
+    if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-rose">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
+  }
+}
+
+function renderAnalyticsUI(stats, tbody) {
     
     // Update summary cards
     document.getElementById('stat-admin-students').textContent = stats.totalStudents;
@@ -187,10 +211,6 @@ async function renderAnalyticsTab() {
         }).join('');
       }
     }
-  } catch (err) {
-    console.error("Failed to load analytics", err);
-    if (tbody) tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-rose">เกิดข้อผิดพลาดในการโหลดข้อมูล</td></tr>`;
-  }
 }
 
 // ══════════════════════════════════════════════════════════
