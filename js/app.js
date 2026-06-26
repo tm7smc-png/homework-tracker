@@ -23,7 +23,7 @@ import {
   initOnboardingModal, initProfilePhotoUpload, completeOnboarding,
   startSimulation, stopSimulation, isSimulating, getSimulatedStudent, canImpersonate,
   initNotificationSettings
-} from "./auth.js?v=2";
+} from "./auth.js?v=3";
 import {
   initAdminPanel, destroyAdminPanel, initUserFilter,
   initStudentTableSearch

@@ -100,9 +100,9 @@ export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   try {
-    // Use redirect for all devices to prevent COOP (Cross-Origin-Opener-Policy) errors
-    // and popup blocking issues in strict environments (like Vercel).
-    await signInWithRedirect(auth, provider);
+    // We now use signInWithPopup for ALL devices because Vercel COOP headers have been fixed
+    // This avoids the notorious redirect loop bug on mobile Chrome/Safari.
+    await signInWithPopup(auth, provider);
   } catch (err) {
     throw err;
   }
@@ -125,11 +125,6 @@ export async function signOut() {
 export function initAuth(onSignedIn, onNeedsOnboarding, onSignedOut) {
   if (_unsubscribeAuth) _unsubscribeAuth();
   
-  // Catch redirect result for mobile browsers to ensure login completes
-  getRedirectResult(auth).catch(err => {
-    console.error("Redirect login error:", err);
-  });
-
   _unsubscribeAuth = onAuthStateChanged(auth, async user => {
     if (!user) {
       _user = null; _userData = null;
