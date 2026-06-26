@@ -100,7 +100,13 @@ export async function signInWithGoogle() {
   const provider = new GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   try {
-    await signInWithPopup(auth, provider);
+    const isMobileOrPWA = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    if (isMobileOrPWA) {
+      // Use redirect on mobile/PWA to avoid popup blocking/hanging issues
+      await signInWithRedirect(auth, provider);
+    } else {
+      await signInWithPopup(auth, provider);
+    }
   } catch (err) {
     throw err;
   }
@@ -729,7 +735,7 @@ export function initOnboardingModal() {
       } catch (err) {
         console.error('Sign out error:', err);
       } finally {
-        setButtonLoading(submitBtn, false, 'เข้าสู่ระบบ');
+        setButtonLoading(submitBtn, false);
       }
       return;
     }

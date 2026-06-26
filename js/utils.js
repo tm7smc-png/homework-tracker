@@ -193,14 +193,15 @@ export function getDeadlineLabel(dueDate, status) {
 //  BUTTON LOADING STATE
 // ══════════════════════════════════════════════════════════
 
-export function setButtonLoading(btn, loading, originalText = '') {
+export function setButtonLoading(btn, loading, originalHTML = '') {
   if (loading) {
-    btn._origText    = btn.textContent;
-    btn.disabled     = true;
-    btn.textContent  = 'กำลังโหลด...';
+    if (!btn._origHTML) btn._origHTML = btn.innerHTML;
+    btn.disabled = true;
+    // Keep width roughly same, replace content with a simple spinner + text
+    btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span class="font-medium">กำลังโหลด...</span>`;
   } else {
-    btn.disabled     = false;
-    btn.textContent  = originalText || btn._origText || btn.textContent;
+    btn.disabled = false;
+    btn.innerHTML = originalHTML || btn._origHTML || btn.innerHTML;
   }
 }
 

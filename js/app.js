@@ -369,7 +369,7 @@ document.getElementById('google-signin-btn')?.addEventListener('click', async ()
   setButtonLoading(btn, true);
   try { await signInWithGoogle(); }
   catch (err) { showToast(err.message, 'error'); }
-  finally { setButtonLoading(btn, false, 'เข้าสู่ระบบด้วย Google'); }
+  finally { setButtonLoading(btn, false); }
 });
 
 // ══════════════════════════════════════════════════════════
