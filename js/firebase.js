@@ -413,6 +413,14 @@ export async function deleteComment(hwId, commentId) {
   await deleteDoc(ref(`homeworks/${hwId}/comments`, commentId));
 }
 
+export async function deleteAllComments(hwId) {
+  const q = query(col(`homeworks/${hwId}/comments`));
+  const snap = await getDocs(q);
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => batch.delete(d.ref));
+  await batch.commit();
+}
+
 // ══════════════════════════════════════════════════════════
 //  PERSONAL TASKS  personalTasks/{uid}/items/{taskId}
 // ══════════════════════════════════════════════════════════

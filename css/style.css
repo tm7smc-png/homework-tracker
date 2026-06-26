@@ -1753,3 +1753,39 @@ html.dark .mobile-nav-btn.active { background: rgba(99, 102, 241, 0.18); color: 
   .admin-tab-pane:not(#tab-analytics) { display: none !important; }
   .modal-overlay { display: none !important; }
 }
+
+/* ══════════════════════════════════════════════════════════
+   CHAT UI
+   ══════════════════════════════════════════════════════════ */
+.chat-bg {
+  /* Subtle chat background pattern */
+  background-image: radial-gradient(rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.chat-bubble {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  line-height: 1.5;
+  transition: transform 0.2s;
+  animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.chat-bubble-me {
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  color: white;
+  border-bottom-right-radius: 4px !important;
+}
+
+.chat-bubble-other {
+  background: white;
+  border: 1px solid rgba(0,0,0,0.05);
+  color: #1E293B;
+  border-bottom-left-radius: 4px !important;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}

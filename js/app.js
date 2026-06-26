@@ -13,7 +13,7 @@ import {
   subscribeNotifications, subscribeReadNotifications,
   markNotificationAsRead, markAllNotificationsAsRead,
   getNotificationDoc, togglePinHomework, togglePinPersonalTask,
-  getAdminCompletionStats, deleteNotification
+  getAdminCompletionStats, deleteNotification, deleteAllComments
 } from "./firebase.js";
 import {
   initAuth, signInWithGoogle, signOut,
@@ -1778,28 +1778,46 @@ window.openCommentModal = (hw) => {
   
   openModal('comment-modal');
   
-  if (currentCommentUnsub) currentCommentUnsub();
-  
+  const hwId = document.getElementById('comment-hw-id').value;
+  const clearBtn = document.getElementById('clear-all-comments-btn');
+  if (clearBtn) {
+    if (isAdmin()) {
+      clearBtn.classList.remove('hidden');
+      clearBtn.onclick = async () => {
+        if (!confirm('ยืนยันการล้างคอมเมนต์ทั้งหมดของงานนี้? (ไม่สามารถกู้คืนได้)')) return;
+        try {
+          await deleteAllComments(hwId);
+          showToast('ล้างคอมเมนต์เรียบร้อยแล้ว');
+        } catch (err) {
+          showToast('เกิดข้อผิดพลาด: ' + err.message, 'error');
+        }
+      };
+    } else {
+      clearBtn.classList.add('hidden');
+    }
+  }
+
   currentCommentUnsub = subscribeComments(hw.id, (comments) => {
     if (comments.length === 0) {
-      list.innerHTML = `<div class="text-center text-sm text-slate-400 py-4">ยังไม่มีคอมเมนต์ เริ่มคุยกันได้เลย!</div>`;
+      list.innerHTML = `<div class="text-center text-sm text-slate-400 py-6">ยังไม่มีคอมเมนต์ เริ่มคุยกันได้เลย!</div>`;
     } else {
       list.innerHTML = '';
       const uid = getUid();
-      comments.forEach(c => {
+      comments.forEach((c, i) => {
         const isMe = c.uid === uid;
         const div = document.createElement('div');
         div.className = `flex flex-col max-w-[85%] ${isMe ? 'self-end items-end' : 'self-start items-start'}`;
-        
         const timeStr = c.createdAt?.toDate ? c.createdAt.toDate().toLocaleTimeString('th-TH', {hour: '2-digit', minute:'2-digit'}) : '';
+        const animDelay = Math.min(i * 0.05, 0.5); // Staggered animation
+        div.style.animationDelay = `${animDelay}s`;
         
         div.innerHTML = `
           ${!isMe ? `<span class="text-[10px] text-slate-500 mb-0.5 ml-1">${c.displayName}</span>` : ''}
-          <div class="px-3 py-2 rounded-2xl text-sm ${isMe ? 'bg-primary text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'} relative group">
+          <div class="px-4 py-2.5 rounded-2xl text-sm chat-bubble ${isMe ? 'chat-bubble-me' : 'chat-bubble-other'} relative group">
             ${c.text}
-            ${isAdmin() ? `<button data-delete-comment="${c.id}" class="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : ''}
+            ${isAdmin() ? `<button data-delete-comment="${c.id}" class="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-rose-600 hover:scale-110 transform duration-200"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : ''}
           </div>
-          <span class="text-[9px] text-slate-400 mt-0.5 ${isMe ? 'mr-1' : 'ml-1'}">${timeStr}</span>
+          <span class="text-[9px] text-slate-400 mt-1 ${isMe ? 'mr-1' : 'ml-1'}">${timeStr}</span>
         `;
         list.appendChild(div);
       });
