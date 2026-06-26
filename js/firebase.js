@@ -6,7 +6,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
+  initializeFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
   onSnapshot, query, orderBy, serverTimestamp, Timestamp,
   where, getDoc, setDoc, writeBatch, getDocs, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -16,7 +16,9 @@ import { firebaseConfig, GAS_ENDPOINT } from "../config/firebase.config.js";
 
 // ─── Init ────────────────────────────────────────────────
 const app = initializeApp(firebaseConfig);
-export const db   = getFirestore(app);
+export const db   = initializeFirestore(app, {
+  experimentalForceLongPolling: true
+});
 export const auth = getAuth(app);
 
 // ── Collection Shortcuts ──────────────────────────────────

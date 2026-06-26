@@ -1,4 +1,4 @@
-const CACHE_NAME = 'homework-tracker-v5';
+const CACHE_NAME = 'homework-tracker-v6';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -24,6 +24,8 @@ self.addEventListener('install', event => {
 self.addEventListener('fetch', event => {
   // Only intercept GET requests for same origin
   if (event.request.method !== 'GET') return;
+  const url = new URL(event.request.url);
+  if (url.origin !== location.origin) return;
   
   event.respondWith(
     caches.match(event.request)
