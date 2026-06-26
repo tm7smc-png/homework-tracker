@@ -1,4 +1,4 @@
-const CACHE_NAME = 'homework-tracker-v2';
+const CACHE_NAME = 'homework-tracker-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -8,7 +8,8 @@ const urlsToCache = [
   '/js/auth.js',
   '/js/firebase.js',
   '/js/utils.js',
-  '/manifest.json'
+  '/manifest.json',
+  '/app-icon.jpg'
 ];
 
 self.addEventListener('install', event => {
