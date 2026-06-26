@@ -1,0 +1,13 @@
+# Firebase Admin Private Key - CRITICAL: DO NOT COMMIT TO GIT
+*firebase-adminsdk*.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+*.code-workspace
+
+# Node (if ever needed)
+node_modules/

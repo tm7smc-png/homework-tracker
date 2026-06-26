@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="ระบบจัดการและบันทึกการบ้านสำหรับนักเรียน"/>
+  <meta name="theme-color" content="#6366F1"/>
+  <title>Homework Tracker</title>
+  <link rel="manifest" href="manifest.json" />
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📚</text></svg>">
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <!-- Tailwind CSS v3 CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['IBM Plex Sans Thai', 'Prompt', 'system-ui', 'sans-serif'] },
+          colors: {
+            primary:   { DEFAULT: '#6366F1', light: '#EEF2FF', dark: '#4338CA', neon: '#818CF8' },
+            violet:    { DEFAULT: '#8B5CF6', light: '#F5F3FF', dark: '#5B21B6', neon: '#A78BFA' },
+            sky:       { DEFAULT: '#0EA5E9', light: '#E0F2FE', dark: '#0369A1' },
+            emerald:   { DEFAULT: '#10B981', light: '#ECFDF5', dark: '#047857' },
+            rose:      { DEFAULT: '#F43F5E', light: '#FFF1F2', dark: '#BE123C' },
+            amber:     { DEFAULT: '#F59E0B', light: '#FFFBEB', dark: '#B45309' },
+            slate:     { 850: '#111827', 900: '#0B1121', 950: '#050811' }
+          },
+          boxShadow: {
+            'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+            'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.6)',
+            'glass-premium': '0 20px 40px -10px rgba(0,0,0,0.1), inset 0 1px 0 0 rgba(255,255,255,0.7)',
+            'glass-premium-dark': '0 20px 40px -10px rgba(0,0,0,0.6), inset 0 1px 0 0 rgba(255,255,255,0.1)',
+            'glow-primary': '0 0 20px rgba(99, 102, 241, 0.5)',
+            'glow-violet': '0 0 20px rgba(139, 92, 246, 0.5)',
+            'glow-amber': '0 0 20px rgba(245, 158, 11, 0.4)',
+            'glow-emerald': '0 0 20px rgba(16, 185, 129, 0.4)',
+            'neon-border': '0 0 0 2px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.3)',
+          },
+          borderRadius: { '2xl': '1rem', '3xl': '1.5rem', '4xl': '2rem' },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out both',
+            'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
+            'blob': 'blob 10s infinite alternate cubic-bezier(0.4, 0, 0.2, 1)',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+            'shimmer': 'shimmer 2.5s infinite linear',
+          },
+          keyframes: {
+            fadeIn:  { from: { opacity: '0' }, to: { opacity: '1' } },
+            slideUp: { from: { opacity: '0', transform: 'translateY(24px)' }, to: { opacity: '1', transform: 'translateY(0)' } },
+            blob: {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(40px, -60px) scale(1.15)' },
+              '66%': { transform: 'translate(-30px, 30px) scale(0.85)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            shimmer: {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(100%)' }
+            }
+          },
+          backdropBlur: { xs: '2px', sm: '4px', md: '8px', lg: '12px', xl: '20px', '2xl': '40px', '3xl': '60px' }
+        }
+      }
+    }
+  </script>
+  <!-- SheetJS -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <!-- Custom CSS (minimal — only what Tailwind can't do) -->
+  <link rel="stylesheet" href="css/style.css?v=2.0.1"/>
+  <script>
+    if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  </script>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 font-sans text-slate-800 dark:text-slate-200 min-h-screen antialiased transition-colors duration-300">
+
+<!-- ░░ SIMULATION BANNER ░░ -->
+<div id="simulation-banner" class="hidden fixed bottom-24 right-8 z-[9999] bg-slate-900/95 backdrop-blur border border-slate-700 text-white px-4 py-3 rounded-2xl flex items-center gap-4 shadow-2xl animate-fade-in">
+  <div class="flex items-center gap-2.5">
+    <div class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping"></div>
+    <div class="flex flex-col">
+      <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">โหมดจำลองการใช้งาน</span>
+      <span id="simulation-info" class="text-xs font-semibold text-slate-200"></span>
+    </div>
+  </div>
+  <button id="exit-simulation-btn" class="bg-amber-500 hover:bg-amber-600 text-slate-900 px-3 py-1.5 rounded-xl text-xs font-bold shadow-md hover:scale-[1.02] transition-all cursor-pointer">
+    ออกจากการจำลอง
+  </button>
+</div>
+
+<!-- ░░ LOADING OVERLAY ░░ -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-spinner"></div>
+  <p class="text-slate-500 text-sm mt-2">กำลังโหลด...</p>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     LOGIN SCREEN
+     ════════════════════════════════════════════════════════ -->
+<div id="login-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center overflow-hidden">
+  <!-- Animated gradient background -->
+  <div class="absolute inset-0 bg-slate-50 dark:bg-slate-900 transition-colors duration-500"></div>
+  
+  <!-- Decorative blobs -->
+  <div class="hidden md:block absolute top-0 -left-4 w-72 h-72 bg-primary rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob dark:mix-blend-screen dark:opacity-20 will-change-transform"></div>
+  <div class="hidden md:block absolute top-0 -right-4 w-72 h-72 bg-violet rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-2000 dark:mix-blend-screen dark:opacity-20 will-change-transform"></div>
+  <div class="hidden md:block absolute -bottom-8 left-20 w-72 h-72 bg-emerald rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000 dark:mix-blend-screen dark:opacity-20 will-change-transform"></div>
+
+  <!-- Login Card -->
+  <div class="relative z-10 w-full max-w-sm mx-4 bg-white/40 dark:bg-slate-900/40 backdrop-blur-2xl border border-white/60 dark:border-slate-700/50 rounded-[2rem] shadow-glass-premium dark:shadow-glass-premium-dark p-8 flex flex-col items-center gap-5 animate-slide-up">
+    <!-- Brand -->
+    <div class="flex items-center gap-2.5">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-violet flex items-center justify-center shadow-lg">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </div>
+      <span class="text-lg font-semibold text-slate-800">Homework Tracker</span>
+    </div>
+
+    <div class="text-center">
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">ยินดีต้อนรับ 👋</h1>
+      <p class="text-sm text-slate-500 mt-1">ลงชื่อเข้าใช้เพื่อดูและจัดการการบ้านของคุณ</p>
+    </div>
+
+    <button id="google-signin-btn" class="w-full flex items-center justify-center gap-3 px-5 py-3 bg-white border border-slate-200 rounded-2xl text-sm font-medium text-slate-700 shadow-sm hover:shadow-md hover:border-slate-300 hover:scale-[1.02] transition-all duration-200 cursor-pointer">
+      <svg width="20" height="20" viewBox="0 0 48 48">
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v8.51h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.14z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+      </svg>
+      เข้าสู่ระบบด้วย Google
+    </button>
+
+    <p class="text-xs text-slate-400 text-center">เข้าใช้งานได้เฉพาะบัญชีที่ได้รับอนุญาตเท่านั้น</p>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════
+     MAIN APP CONTAINER
+     ════════════════════════════════════════════════════════ -->
+<div id="app-container" class="hidden min-h-screen flex flex-col">
+
+  <!-- ░░ HEADER ░░ -->
+  <header class="sticky top-0 z-40 h-16 bg-white/50 dark:bg-slate-950/50 backdrop-blur-3xl border-b border-white/30 dark:border-slate-800 shadow-glass-premium dark:shadow-glass-premium-dark transition-colors duration-300" role="banner">
+    <div class="max-w-5xl mx-auto px-4 h-full flex items-center justify-between gap-4">
+
+      <!-- Brand -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="mobile-menu-toggle-btn" class="p-2 -ml-2 rounded-xl text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all flex sm:hidden" aria-label="เปิดเมนู">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet flex items-center justify-center shadow-md">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+          </svg>
+        </div>
+        <span class="font-semibold text-slate-800 dark:text-slate-200 text-sm hidden sm:block">Homework Tracker</span>
+      </div>
+
+      <!-- Nav tabs -->
+      <nav class="hidden sm:flex items-center gap-1">
+        <button id="nav-dashboard-btn" class="nav-btn active flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          <span class="hidden sm:inline">Dashboard</span>
+        </button>
+        <button id="nav-calendar-btn" class="nav-btn flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+          <span class="hidden sm:inline">ปฏิทิน</span>
+        </button>
+        <button id="nav-admin-btn" class="nav-btn hidden admin-only flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium transition-all duration-200">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+          <span class="hidden sm:inline">จัดการระบบ</span>
+        </button>
+      </nav>
+
+      <!-- Right actions -->
+      <div class="flex items-center gap-2">
+        <!-- Admin quick actions -->
+        <div class="header-admin-actions admin-only hidden items-center gap-1.5">
+          <button id="open-subject-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all duration-200">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+            </svg>
+            <span class="hidden sm:inline">วิชา</span>
+          </button>
+          <button id="open-add-hw-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-gradient-to-r from-primary to-violet shadow-md hover:shadow-lg hover:scale-[1.03] transition-all duration-200">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span class="hidden sm:inline">เพิ่มการบ้าน</span>
+          </button>
+        </div>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle-btn" class="p-2 rounded-xl text-slate-400 hover:text-primary hover:bg-slate-100 transition-all duration-200" title="สลับโหมดมืด/สว่าง">
+          <!-- Sun Icon (shown in dark mode) -->
+          <svg id="theme-toggle-light-icon" class="hidden w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <!-- Moon Icon (shown in light mode) -->
+          <svg id="theme-toggle-dark-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+
+        <!-- Profile button -->
+        <button id="header-profile-btn" class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-2xl hover:bg-slate-100 transition-all duration-200 cursor-pointer" title="โปรไฟล์">
+          <div id="header-avatar" class="flex-shrink-0"></div>
+          <span id="header-name" class="text-sm font-medium text-slate-700 max-w-[100px] truncate hidden sm:block"></span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ░░ DASHBOARD VIEW ░░ -->
+  <main id="view-dashboard" class="main-view flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+
+    <!-- ── Bento Stats Grid ── -->
+    <section class="grid grid-cols-3 gap-3 mb-6" aria-label="สถิติ">
+      <!-- Total -->
+      <div class="bento-stat bento-stat-primary bg-primary-light/80 dark:bg-primary-dark/40 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-sm rounded-3xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 hover:scale-[1.03] transition-all duration-300 cursor-default">
+        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-primary/15 flex items-center justify-center text-primary shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span id="stat-total" class="text-xl sm:text-2xl font-bold text-primary leading-tight">0</span>
+          <span class="text-[10px] sm:text-xs font-medium text-primary/70 dark:text-primary/80 mt-0.5 truncate">ทั้งหมด</span>
+        </div>
+      </div>
+      <!-- Pending -->
+      <div class="bento-stat bento-stat-amber bg-amber-light/80 dark:bg-amber-dark/40 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-sm rounded-3xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 hover:scale-[1.03] transition-all duration-300 cursor-default">
+        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-amber/15 flex items-center justify-center text-amber shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span id="stat-pending" class="text-xl sm:text-2xl font-bold text-amber leading-tight">0</span>
+          <span class="text-[10px] sm:text-xs font-medium text-amber/70 dark:text-amber/80 mt-0.5 truncate">ค้างอยู่</span>
+        </div>
+      </div>
+      <!-- Done -->
+      <div class="bento-stat bento-stat-emerald bg-emerald-light/80 dark:bg-emerald-dark/40 backdrop-blur-xl border border-white/60 dark:border-white/10 shadow-sm rounded-3xl p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 hover:scale-[1.03] transition-all duration-300 cursor-default">
+        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-emerald/15 flex items-center justify-center text-emerald shrink-0">
+          <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span id="stat-done" class="text-xl sm:text-2xl font-bold text-emerald leading-tight">0</span>
+          <span class="text-[10px] sm:text-xs font-medium text-emerald/70 dark:text-emerald/80 mt-0.5 truncate">เสร็จแล้ว</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Search & Filter Controls ── -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-6 items-center">
+      <!-- Search Bar -->
+      <div class="relative flex-1 w-full">
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-slate-400">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <input type="text" id="global-search-input" class="block w-full pl-10 pr-3 py-2.5 border border-slate-200 rounded-2xl leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all sm:text-sm" placeholder="ค้นหาการบ้าน, วิชา, คำอธิบาย...">
+      </div>
+      
+      <!-- Filter & Sort Group -->
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <!-- Filter Status -->
+        <select id="filter-status-select" class="block w-full sm:w-auto pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-slate-600 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_0.5rem_center] bg-no-repeat cursor-pointer">
+          <option value="all">สถานะ: ทั้งหมด</option>
+          <option value="pending">ค้างอยู่</option>
+          <option value="done">เสร็จแล้ว</option>
+          <option value="overdue">เลยกำหนด</option>
+        </select>
+        
+        <!-- Sort By -->
+        <select id="sort-by-select" class="block w-full sm:w-auto pl-3 pr-8 py-2.5 text-sm border border-slate-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all bg-white text-slate-600 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%2394A3B8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_0.5rem_center] bg-no-repeat cursor-pointer">
+          <option value="date_asc">เรียง: กำหนดส่ง (ใกล้)</option>
+          <option value="date_desc">เรียง: กำหนดส่ง (ไกล)</option>
+          <option value="subject_asc">เรียง: ชื่อวิชา (ก-ฮ)</option>
+        </select>
+      </div>
+    </div>
+    <!-- ── Empty State ── -->
+    <div id="empty-state" class="hidden flex-col items-center justify-center py-20 gap-4 text-center">
+      <div class="w-16 h-16 rounded-3xl bg-slate-100 flex items-center justify-center">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-base font-semibold text-slate-700">ยังไม่มีการบ้าน</h2>
+        <p class="text-sm text-slate-400 mt-1">ยังไม่มีงานที่ได้รับมอบหมาย</p>
+      </div>
+    </div>
+
+    <!-- ── Active Homeworks ── -->
+    <section id="active-section">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <span class="w-2 h-2 rounded-full bg-primary inline-block"></span>
+          งานที่ต้องทำ
+        </h2>
+        <button id="add-personal-task-btn" class="flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-medium text-violet bg-violet-light hover:bg-violet/20 transition-all duration-200">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          + งานส่วนตัว
+        </button>
+      </div>
+      <div id="active-homework-list" class="hw-grid" role="list">
+        <!-- Skeleton Loaders -->
+        <div class="skeleton-card">
+          <div class="skeleton skeleton-avatar" style="width:30px; height:30px;"></div>
+          <div class="skeleton-card-body">
+            <div class="skeleton-card-tags"><div class="skeleton skeleton-badge"></div><div class="skeleton skeleton-badge" style="width:50px;"></div></div>
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text long"></div>
+          </div>
+        </div>
+        <div class="skeleton-card">
+          <div class="skeleton skeleton-avatar" style="width:30px; height:30px;"></div>
+          <div class="skeleton-card-body">
+            <div class="skeleton-card-tags"><div class="skeleton skeleton-badge" style="width:70px;"></div></div>
+            <div class="skeleton skeleton-title" style="width:40%;"></div>
+            <div class="skeleton skeleton-text short"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Completed Homeworks ── -->
+    <section id="completed-section" class="mt-6">
+      <h2 class="flex items-center gap-2 text-sm font-semibold text-slate-500 mb-3">
+        <span class="w-2 h-2 rounded-full bg-emerald inline-block"></span>
+        เสร็จแล้ว
+      </h2>
+      <div id="completed-homework-list" class="hw-grid" role="list"></div>
+    </section>
+  </main>
+
+  <!-- ░░ CALENDAR VIEW ░░ -->
+  <main id="view-calendar" class="main-view hidden flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl font-bold text-slate-800 dark:text-white">ปฏิทินการบ้าน</h2>
+      <div class="flex items-center gap-2">
+        <button id="cal-prev-btn" class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-500 dark:text-slate-400">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h3 id="cal-month-year" class="text-base font-semibold text-slate-700 dark:text-slate-200 min-w-[120px] text-center">มกราคม 2026</h3>
+        <button id="cal-next-btn" class="p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-slate-500 dark:text-slate-400">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    </div>
+    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-3xl p-5 shadow-sm">
+      <div class="grid grid-cols-7 gap-1.5 mb-2 text-center text-xs font-semibold text-slate-400 dark:text-slate-400 uppercase tracking-wider">
+        <div>อา.</div><div>จ.</div><div>อ.</div><div>พ.</div><div>พฤ.</div><div>ศ.</div><div>ส.</div>
+      </div>
+      <div id="calendar-grid">
+        <!-- Calendar days rendered via JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ░░ ADMIN PANEL VIEW ░░ -->
+  <main id="view-admin" class="main-view hidden flex-1 max-w-5xl mx-auto w-full px-4 py-6 admin-only">
+    
+    <!-- Admin Mobile Menu Trigger -->
+    <div class="sm:hidden mb-4 flex items-center justify-between bg-white/80 dark:bg-slate-800/80 backdrop-blur border border-slate-200 dark:border-slate-700 shadow-sm p-3 rounded-2xl">
+      <span id="admin-current-tab-label" class="text-sm font-bold text-slate-700 dark:text-slate-200">📊 สถิติภาพรวม</span>
+      <button id="admin-drawer-toggle-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-primary bg-primary-light dark:bg-primary-dark/30 hover:scale-[1.02] transition-all">
+        ☰ เมนูแอดมิน
+      </button>
+    </div>
+
+    <!-- Admin Drawer Backdrop -->
+    <div id="admin-drawer-backdrop" class="hidden fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-[990]"></div>
+
+    <!-- Admin Grid Wrapper (Desktop Split Layout) -->
+    <div class="admin-grid-layout">
+      
+      <!-- Admin Tabs Drawer/Sidebar -->
+      <div class="admin-tab-container flex items-center gap-1.5 mb-6 border-b border-slate-200 pb-3">
+        <!-- Close button inside drawer for mobile -->
+        <div class="sm:hidden flex items-center justify-between w-full px-4 py-3 border-b border-slate-100 dark:border-slate-800 mb-2">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">เมนูจัดการระบบ</span>
+          <button id="admin-drawer-close-btn" class="text-slate-400 hover:text-slate-600 p-1">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      <button class="admin-tab-btn active flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200" data-tab="analytics">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        สถิติภาพรวม
+      </button>
+      <button class="admin-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200" data-tab="students">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        รายชื่อนักเรียน
+      </button>
+      <button class="admin-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200" data-tab="accounts">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        บัญชีผู้ใช้
+      </button>
+      <button class="admin-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200" data-tab="settings">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        ตั้งค่าระบบ
+      </button>
+      <button class="admin-tab-btn flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200" data-tab="push-notifications">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        ส่งพุชแจ้งเตือน
+      </button>
+      </div> <!-- end admin-tab-container -->
+
+      <div class="admin-content-pane flex-1 min-w-0">
+        <!-- Tab: Analytics -->
+        <div id="tab-analytics" class="admin-tab-pane animate-fade-in">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-slate-800">ภาพรวมระบบ (Analytics)</h2>
+        <button id="admin-export-pdf-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-rose hover:bg-rose/90 shadow-sm hover:shadow hover:scale-[1.02] transition-all duration-200 cursor-pointer">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          ส่งออกรายงาน PDF
+        </button>
+      </div>
+      
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm text-center">
+          <div id="stat-admin-students" class="text-3xl font-bold text-primary mb-1">0</div>
+          <div class="text-xs text-slate-500 font-medium">นักเรียนในระบบ</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm text-center">
+          <div id="stat-admin-hw-total" class="text-3xl font-bold text-violet mb-1">0</div>
+          <div class="text-xs text-slate-500 font-medium">การบ้านทั้งหมด</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm text-center">
+          <div id="stat-admin-hw-done" class="text-3xl font-bold text-emerald mb-1">0</div>
+          <div class="text-xs text-slate-500 font-medium">ทำเสร็จแล้ว</div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm text-center">
+          <div id="stat-admin-hw-rate" class="text-3xl font-bold text-amber mb-1">0%</div>
+          <div class="text-xs text-slate-500 font-medium">อัตราการส่งงาน</div>
+        </div>
+      </div>
+      
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm mb-6">
+        <h3 class="text-sm font-semibold text-slate-700 mb-4">10 อันดับนักเรียนที่ส่งงานครบมากที่สุด</h3>
+        <div class="admin-table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th class="w-16">อันดับ</th>
+                <th>นักเรียน</th>
+                <th>ความคืบหน้า</th>
+              </tr>
+            </thead>
+            <tbody id="top-students-tbody">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Students -->
+    <div id="tab-students" class="admin-tab-pane hidden animate-fade-in">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-slate-800">รายชื่อนักเรียน</h2>
+        <div class="flex items-center gap-2">
+          <button id="excel-export-btn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-emerald hover:bg-emerald/90 shadow-sm hover:shadow hover:scale-[1.02] transition-all duration-200 cursor-pointer">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            <span>ส่งออกเป็น Excel</span>
+          </button>
+          <button class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 bg-slate-100 hover:bg-slate-200 transition-all duration-200" onclick="document.getElementById('excel-file-input').click()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <span id="excel-import-btn">นำเข้าจาก Excel</span>
+          </button>
+        </div>
+        <input type="file" id="excel-file-input" accept=".xlsx,.csv" class="hidden"/>
+      </div>
+
+      <!-- Add Student Form -->
+      <div class="bg-white border border-slate-200 rounded-3xl p-5 mb-5 shadow-sm">
+        <h3 class="text-sm font-semibold text-slate-700 mb-3">เพิ่มนักเรียนใหม่</h3>
+        <form id="add-student-form" class="flex flex-wrap gap-2 items-end">
+          <input type="text" id="add-student-id"       class="form-input flex-1 min-w-[110px]" placeholder="เลขประจำตัว *" required/>
+          <input type="text" id="add-student-first"    class="form-input flex-1 min-w-[100px]" placeholder="ชื่อ *" required/>
+          <input type="text" id="add-student-last"     class="form-input flex-1 min-w-[100px]" placeholder="นามสกุล *" required/>
+          <input type="text" id="add-student-nickname" class="form-input flex-1 min-w-[80px]"  placeholder="ชื่อเล่น"/>
+          <button type="submit" class="btn-primary px-4 py-2 rounded-xl text-sm font-semibold whitespace-nowrap">เพิ่ม</button>
+        </form>
+      </div>
+
+      <!-- Simulation Panel (Main Admin Only) -->
+      <div id="admin-simulation-panel" class="hidden bg-amber-50/50 border border-amber-200 rounded-3xl p-5 mb-5 shadow-sm">
+        <h3 class="text-sm font-bold text-amber-800 flex items-center gap-1.5 mb-2">
+          🔑 จำลองการเข้าใช้งานระบบ
+        </h3>
+        <p class="text-xs text-amber-700 mb-3">
+          ป้อนเลขประจำตัวนักเรียนที่ต้องการทดสอบเพื่อจำลองมุมมองของนักเรียนคนนั้นในระบบ
+        </p>
+        <form id="simulation-form" class="flex gap-2">
+          <input type="text" id="simulation-student-id" class="form-input flex-1 max-w-[240px] border-amber-200 focus:border-amber-500 focus:ring-amber-500/20" placeholder="ระบุเลขประจำตัวนักเรียน..." required autocomplete="off"/>
+          <button type="submit" class="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 transition-all cursor-pointer">
+            เริ่มจำลอง
+          </button>
+        </form>
+      </div>
+
+      <div class="admin-search-filter-row flex items-center gap-2 mb-3">
+        <input type="text" id="student-search" class="form-input flex-1" placeholder="🔍 ค้นหา..."/>
+        <div class="filter-group shrink-0">
+          <button class="filter-tab active" data-student-filter="all">ทั้งหมด</button>
+          <button class="filter-tab" data-student-filter="active">Active</button>
+          <button class="filter-tab" data-student-filter="pending">Pending</button>
+        </div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="data-table">
+          <thead><tr>
+            <th class="w-[15%]">เลขประจำตัว</th>
+            <th class="w-[25%]">ชื่อ-นามสกุล</th>
+            <th class="w-[10%] hidden sm:table-cell">ชื่อเล่น</th>
+            <th class="w-[25%]">อีเมล</th>
+            <th class="w-[12%]">สถานะ</th>
+            <th class="w-[13%] min-w-[210px]">จัดการ</th>
+          </tr></thead>
+          <tbody id="students-tbody">
+            <tr>
+              <td colspan="6" class="p-0 border-0">
+                <div class="skeleton-row"><div class="skeleton skeleton-text short" style="width:60px;"></div><div class="flex-1"><div class="skeleton skeleton-text long"></div></div></div>
+                <div class="skeleton-row"><div class="skeleton skeleton-text short" style="width:60px;"></div><div class="flex-1"><div class="skeleton skeleton-text long"></div></div></div>
+                <div class="skeleton-row"><div class="skeleton skeleton-text short" style="width:60px;"></div><div class="flex-1"><div class="skeleton skeleton-text long"></div></div></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Accounts -->
+    <div id="tab-accounts" class="admin-tab-pane hidden animate-fade-in">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-base font-semibold text-slate-800">บัญชีผู้ใช้</h2>
+        <div class="filter-group">
+          <button class="filter-tab active" data-user-filter="all">ทั้งหมด</button>
+          <button class="filter-tab" data-user-filter="active">Active</button>
+          <button class="filter-tab" data-user-filter="pending">Pending</button>
+        </div>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="data-table">
+          <thead><tr>
+            <th class="w-[32%]">ผู้ใช้</th>
+            <th class="w-[14%]">เลขประจำตัว</th>
+            <th class="w-[14%]">บทบาท</th>
+            <th class="w-[12%]">สถานะ</th>
+            <th class="w-[14%] hidden md:table-cell">เข้าใช้ล่าสุด</th>
+            <th class="w-[14%] min-w-[170px]">จัดการ</th>
+          </tr></thead>
+          <tbody id="users-tbody">
+            <tr>
+              <td colspan="6" class="p-0 border-0">
+                <div class="skeleton-row"><div class="skeleton skeleton-avatar"></div><div class="flex-1"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text long"></div></div></div>
+                <div class="skeleton-row"><div class="skeleton skeleton-avatar"></div><div class="flex-1"><div class="skeleton skeleton-title"></div><div class="skeleton skeleton-text long"></div></div></div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab: Settings -->
+    <div id="tab-settings" class="admin-tab-pane hidden animate-fade-in">
+      <h2 class="text-base font-semibold text-slate-800 mb-4">ตั้งค่าและดูแลระบบ</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl">
+        
+        <!-- Cleanup Case 1: Completed by everyone -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-1.5">✅ ล้างงานที่เสร็จแล้วของทุกคน</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-4">ลบการบ้านทั่วไปที่ทุกคน (นักเรียนที่ได้รับมอบหมายทั้งหมด) ทำเสร็จสิ้นแล้ว หากยังมีใครที่ยังทำไม่เสร็จ งานจะไม่ถูกลบ</p>
+          </div>
+          <button id="cleanup-completed-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald border border-emerald/20 bg-emerald-light hover:bg-emerald/10 hover:scale-[1.01] active:scale-95 transition-all duration-200 cursor-pointer shadow-sm">
+            ล้างงานการบ้านที่ทำเสร็จแล้ว
+          </button>
+        </div>
+
+        <!-- Cleanup Case 2: Overdue (Expired) -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-1.5">⏰ ล้างงานที่หมดเวลาส่ง</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-4">ลบงานการบ้านทั่วไปทั้งหมดที่เลยวันกำหนดส่งมาแล้วออกจากระบบทันที แม้ว่าจะมีบางคนยังทำไม่เสร็จก็ตาม</p>
+          </div>
+          <button id="cleanup-overdue-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-amber border border-amber/20 bg-amber-light hover:bg-amber/10 hover:scale-[1.01] active:scale-95 transition-all duration-200 cursor-pointer shadow-sm">
+            ล้างงานการบ้านที่เลยกำหนดส่ง
+          </button>
+        </div>
+
+        <!-- Cleanup Case 3: Delete All -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-rose-600 mb-1 flex items-center gap-1.5">💥 ลบการบ้านทั้งหมด</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-4">ลบการบ้านทั่วไปทั้งหมดที่มีอยู่ในฐานข้อมูลออกทั้งหมดทันที (ล้างกระดานการบ้านใหม่ทั้งหมด)</p>
+          </div>
+          <button id="cleanup-all-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-rose hover:bg-rose/95 hover:scale-[1.01] active:scale-95 transition-all duration-200 cursor-pointer shadow-sm">
+            ลบการบ้านทั้งหมดออกจากระบบ
+          </button>
+        </div>
+
+        <!-- Cleanup Case 4: Recommended push notifications logs -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between">
+          <div>
+            <h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-1.5">📢 ล้างประวัติแจ้งเตือนเก่า</h3>
+            <p class="text-xs text-slate-500 leading-relaxed mb-4">ลบประวัติประกาศและประวัติพุชแจ้งเตือนเก่าที่ส่งไปแล้วเกินกว่า 30 วัน เพื่อเพิ่มความรวดเร็วในการโหลดแจ้งเตือน</p>
+          </div>
+          <button id="cleanup-notifications-btn" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 border border-slate-200 bg-slate-50 hover:bg-slate-100 hover:scale-[1.01] active:scale-95 transition-all duration-200 cursor-pointer shadow-sm">
+            ล้างประวัติการแจ้งเตือน (>30 วัน)
+          </button>
+        </div>
+
+        <!-- Cleanup Case 5: Recommended completed personal tasks -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between md:col-span-2">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="max-w-xl">
+              <h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-1.5">👤 ล้างงานส่วนตัวที่เสร็จแล้วของทุกคน</h3>
+              <p class="text-xs text-slate-500 leading-relaxed mb-1.5">ลบงานส่วนตัว (Personal Tasks) ของผู้ใช้ทุกคนในระบบเฉพาะที่ทำเสร็จแล้ว (ไม่รวมการบ้านหลัก)</p>
+            </div>
+            <button id="cleanup-personal-completed-btn" class="flex-shrink-0 flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-violet border border-violet/20 bg-violet-light hover:bg-violet/10 hover:scale-[1.01] active:scale-95 transition-all duration-200 cursor-pointer shadow-sm">
+              ล้างงานส่วนตัวที่เสร็จแล้ว
+            </button>
+          </div>
+        </div>
+
+        <!-- System Backup / Restore -->
+        <div class="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm flex flex-col justify-between md:col-span-2 mt-4">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="max-w-xl">
+              <h3 class="text-sm font-bold text-slate-700 mb-1 flex items-center gap-1.5">💾 สำรองและกู้คืนข้อมูลระบบ (Backup / Restore)</h3>
+              <p class="text-xs text-slate-500 leading-relaxed mb-1.5">ส่งออกข้อมูลการบ้านและวิชาเรียนทั้งหมดในระบบเป็นไฟล์ JSON เพื่อสำรองข้อมูล หรือนำเข้าไฟล์ JSON เพื่อกู้คืนข้อมูล</p>
+            </div>
+            <div class="flex-shrink-0 flex gap-2">
+              <button id="sys-backup-btn" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 hover:scale-[1.01] active:scale-95 transition-all duration-200 cursor-pointer shadow-sm">
+                ส่งออก Backup (JSON)
+              </button>
+              <button onclick="document.getElementById('sys-restore-input').click()" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 hover:scale-[1.01] active:scale-95 transition-all duration-200 cursor-pointer shadow-sm border border-slate-200">
+                กู้คืนข้อมูล (Restore)
+              </button>
+              <input type="file" id="sys-restore-input" accept=".json" class="hidden" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: Push Notifications -->
+    <div id="tab-push-notifications" class="admin-tab-pane hidden animate-fade-in">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Form to send push notifications -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+          <h2 class="text-base font-semibold text-slate-800">ส่งประกาศและพุชแจ้งเตือน</h2>
+          <div class="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm flex flex-col gap-4">
+            
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-slate-600" for="push-target-user">ผู้รับ (เฉพาะคนที่เปิดการแจ้งเตือนแล้ว) <span class="text-rose">*</span></label>
+              <select id="push-target-user" class="form-input w-full" required>
+                <option value="">-- เลือกผู้รับ --</option>
+                <option value="all_users">ทุกคนในกลุ่ม (all_users)</option>
+              </select>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-slate-600" for="push-title">หัวข้อแจ้งเตือน <span class="text-rose">*</span></label>
+              <input type="text" id="push-title" class="form-input w-full" placeholder="ใส่หัวข้อแจ้งเตือน..." required/>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-semibold text-slate-600" for="push-body">ข้อความรายละเอียด <span class="text-rose">*</span></label>
+              <textarea id="push-body" class="form-input w-full resize-none" placeholder="ใส่ข้อความแจ้งเตือนที่ต้องการส่ง..." rows="3" required></textarea>
+            </div>
+
+            <button id="send-custom-push-btn" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-primary to-violet hover:scale-[1.02] transition-all duration-200 shadow-md cursor-pointer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+              ส่งข้อความแจ้งเตือน
+            </button>
+          </div>
+        </div>
+
+        <!-- History / Deleting sent announcements -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base font-bold text-slate-800 dark:text-white">ประวัติการประกาศและแจ้งเตือน</h2>
+            <button id="delete-selected-announcements-btn" class="hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-rose hover:bg-rose/90 shadow-sm hover:shadow hover:scale-[1.01] transition-all duration-200 cursor-pointer">
+              🗑️ ลบที่เลือก (<span id="selected-announcements-count">0</span>)
+            </button>
+          </div>
+          
+          <div class="flex items-center gap-3 bg-slate-50 dark:bg-slate-800/40 px-4 py-3 rounded-2xl border border-slate-150 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-350 shadow-xs">
+            <input type="checkbox" id="select-all-announcements" class="accent-primary cursor-pointer w-4.5 h-4.5 rounded border-slate-300 dark:border-slate-650" />
+            <label for="select-all-announcements" class="cursor-pointer font-bold select-none">เลือกประกาศทั้งหมด (Select All)</label>
+          </div>
+
+          <div id="sent-announcements-list" class="flex flex-col gap-3 max-h-[600px] overflow-y-auto pr-1 animate-fade-in">
+            <div class="skeleton-card">
+              <div class="skeleton-card-body">
+                <div class="skeleton skeleton-title" style="width:70%;"></div>
+                <div class="skeleton skeleton-text long"></div>
+                <div class="skeleton skeleton-text short"></div>
+              </div>
+            </div>
+            <div class="skeleton-card">
+              <div class="skeleton-card-body">
+                <div class="skeleton skeleton-title" style="width:50%;"></div>
+                <div class="skeleton skeleton-text"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div> <!-- end admin-content-pane -->
+    </div> <!-- end admin-grid-layout -->
+  </main>
+</div><!-- end app-container -->
+
+<!-- ════════════════════════════════════════════════════════
+     MODALS — All centered via flex items-center justify-center
+     ════════════════════════════════════════════════════════ -->
+
+<!-- ░░ Generic CONFIRM Modal ░░ -->
+<div id="util-confirm-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-sm mx-4">
+    <div id="ucm-icon" class="text-4xl text-center pt-6">🤔</div>
+    <h3 id="ucm-title" class="modal-title text-center px-6 pt-3">ยืนยัน?</h3>
+    <p id="ucm-message" class="text-sm text-slate-600 text-center px-6 pt-2 pb-1 leading-relaxed"></p>
+    <p id="ucm-detail" class="hidden text-xs text-slate-400 text-center bg-slate-50 rounded-xl mx-6 px-4 py-2.5 mb-1"></p>
+    <div class="flex gap-3 px-6 pb-6 pt-4 justify-center">
+      <button id="ucm-cancel" class="btn-ghost min-w-[90px]">ยกเลิก</button>
+      <button id="ucm-confirm" class="btn-primary min-w-[90px]">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ Generic ALERT Modal ░░ -->
+<div id="util-alert-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-sm mx-4">
+    <div id="uam-icon" class="text-4xl text-center pt-6">ℹ️</div>
+    <h3 id="uam-title" class="modal-title text-center px-6 pt-3">แจ้งเตือน</h3>
+    <p id="uam-message" class="text-sm text-slate-600 text-center px-6 pt-2 pb-1 leading-relaxed"></p>
+    <div class="px-6 pb-6 pt-4">
+      <button id="uam-close" class="btn-primary w-full">รับทราบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ ONBOARDING Modal ░░ -->
+<div id="onboarding-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-sm mx-4">
+    <div class="p-6">
+      <div class="flex items-center gap-3 mb-4">
+        <div id="onboarding-avatar" class="flex-shrink-0"></div>
+        <div>
+          <h2 class="font-bold text-slate-900">ยินดีต้อนรับ!</h2>
+          <p id="onboarding-google-name" class="text-sm text-slate-500"></p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 mb-4">กรุณาระบุ <strong>เลขประจำตัวนักเรียน</strong> เพื่อเชื่อมโยงบัญชีของคุณ</p>
+      <form id="onboarding-form" class="flex flex-col gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1.5" for="onboarding-student-id">เลขประจำตัวนักเรียน</label>
+          <input type="text" id="onboarding-student-id" class="form-input w-full text-base" placeholder="กรอกเลขประจำตัวของคุณ" required autocomplete="off"/>
+          <p id="onboarding-error" class="text-xs text-rose mt-1.5 min-h-[1em]"></p>
+        </div>
+        <button type="submit" id="onboarding-submit" class="btn-primary w-full py-3">เข้าสู่ระบบ</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ PROFILE Modal ░░ -->
+<div id="profile-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-sm mx-4">
+    <div class="modal-header">
+      <h3 class="modal-title">โปรไฟล์ของฉัน</h3>
+      <button class="modal-close-btn" id="close-profile-modal-btn" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6 flex flex-col gap-4">
+      <div class="flex flex-col items-center gap-3 pb-4 border-b border-slate-100">
+        <div class="relative">
+          <div id="pm-avatar" class="w-18 h-18"></div>
+          <label class="absolute bottom-0 right-0 w-7 h-7 bg-primary rounded-full flex items-center justify-center cursor-pointer shadow-md hover:scale-110 transition-all" title="เปลี่ยนรูปโปรไฟล์">
+            <input type="file" id="profile-photo-input" accept="image/*" class="hidden"/>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </label>
+        </div>
+        <div class="text-center">
+          <div id="pm-name" class="font-semibold text-slate-900"></div>
+          <div id="pm-email" class="text-xs text-slate-400 mt-0.5"></div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2.5">
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">เลขประจำตัว</span>
+          <span id="pm-student-id" class="font-medium text-slate-800"></span>
+        </div>
+        <div class="flex justify-between text-sm">
+          <span class="text-slate-500">บทบาท</span>
+          <span id="pm-role" class="font-medium text-slate-800"></span>
+        </div>
+        <div class="flex justify-between text-sm" id="pm-stats-row">
+          <span class="text-slate-500">สถิติการส่งงาน</span>
+          <span id="pm-completion-rate" class="font-medium text-amber-600">กำลังคำนวณ...</span>
+        </div>
+      </div>
+
+
+      <button id="signout-btn" class="flex items-center justify-center gap-2 w-full py-2.5 rounded-2xl text-sm font-medium text-slate-600 border border-slate-200 hover:border-rose/40 hover:text-rose hover:bg-rose-light transition-all duration-200 mt-1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+        ออกจากระบบ
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ PERSONAL NOTE Modal ░░ -->
+<div id="personal-note-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-md mx-4">
+    <div class="modal-header">
+      <h3 class="modal-title">📝 หมายเหตุส่วนตัว</h3>
+      <button class="modal-close-btn" id="close-note-modal-btn" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form id="personal-note-form" class="p-6 flex flex-col gap-4">
+      <input type="hidden" id="note-hw-id" />
+      <div class="text-xs text-slate-500 mb-1">หมายเหตุนี้จะเห็นเฉพาะคุณเท่านั้น เหมาะสำหรับจดเตือนความจำหรือคำถามที่ต้องการถามครู</div>
+      <textarea id="note-text" class="form-input w-full resize-none min-h-[120px]" placeholder="พิมพ์หมายเหตุส่วนตัวที่นี่..." required></textarea>
+      
+      <div class="flex gap-3 pt-2">
+        <button type="button" id="note-cancel-btn" class="btn-ghost flex-1">ยกเลิก</button>
+        <button type="submit" id="note-save-btn" class="btn-primary flex-1">บันทึกหมายเหตุ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ░░ COMMENT Modal ░░ -->
+<div id="comment-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-md mx-4 max-h-[85vh] flex flex-col">
+    <div class="modal-header shrink-0">
+      <h3 class="modal-title">💬 แชท/คอมเมนต์</h3>
+      <button class="modal-close-btn" id="close-comment-modal-btn" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <div id="comment-list" class="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50">
+      <!-- Comments will be rendered here -->
+      <div class="text-center text-sm text-slate-400 py-4">ยังไม่มีคอมเมนต์ เริ่มคุยกันได้เลย!</div>
+    </div>
+    
+    <form id="comment-form" class="p-4 bg-white border-t border-slate-100 shrink-0 flex gap-2">
+      <input type="hidden" id="comment-hw-id" />
+      <input type="text" id="comment-input" class="form-input flex-1 rounded-full px-4" placeholder="พิมพ์ข้อความ..." required autocomplete="off" />
+      <button type="submit" id="comment-send-btn" class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center shrink-0 shadow-md hover:bg-indigo-600 transition-colors">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+        </svg>
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- ░░ ADD/EDIT HOMEWORK Modal (Admin) ░░ -->
+<div id="homework-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-lg mx-4">
+    <div class="modal-header">
+      <h3 id="hw-modal-title" class="modal-title">เพิ่มการบ้านใหม่</h3>
+      <button class="modal-close-btn" id="hw-cancel-btn" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form id="hw-form" class="p-5 flex flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-slate-600" for="hw-description">รายละเอียดการบ้าน <span class="text-rose">*</span></label>
+        <textarea id="hw-description" class="form-input resize-none" placeholder="โจทย์หรืองานที่ต้องทำ..." rows="3" required></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-600" for="hw-subject">วิชา <span class="text-rose">*</span></label>
+          <select id="hw-subject" class="form-input" required>
+            <option value="">-- เลือกวิชา --</option>
+          </select>
+          <!-- Custom Subject Input (hidden by default) -->
+          <input type="text" id="hw-subject-custom" class="form-input mt-1.5 hidden animate-fade-in" placeholder="ระบุชื่อวิชาอื่น ๆ..." />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-600" for="hw-due-date">วันกำหนดส่ง</label>
+          <input type="date" id="hw-due-date" class="form-input"/>
+          <label class="flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer">
+            <input type="checkbox" id="hw-no-due-date" class="accent-primary"/> ไม่มีกำหนดส่ง
+          </label>
+        </div>
+      </div>
+      <div class="flex flex-col gap-1.5 relative">
+        <label class="text-xs font-semibold text-slate-600">มอบหมายให้</label>
+        <button type="button" id="hw-assign-dropdown-btn" class="form-input text-left flex items-center justify-between cursor-pointer">
+          <span id="hw-assign-dropdown-label" class="truncate text-slate-700">ทุกคน</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2.5" class="ml-2 transform transition-transform duration-200" id="hw-assign-dropdown-chevron">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
+        <div id="hw-assign-dropdown-panel" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white border border-slate-200 rounded-2xl shadow-xl z-[600] max-h-60 overflow-y-auto p-2.5 flex flex-col gap-1">
+          <!-- Checkbox options will be rendered here dynamically -->
+        </div>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-slate-600" for="hw-priority">ความสำคัญ</label>
+        <select id="hw-priority" class="form-input">
+          <option value="normal">🟡 ปกติ</option>
+          <option value="high">🔴 ด่วนมาก</option>
+          <option value="low">🟢 ไม่เร่งด่วน</option>
+        </select>
+      </div>
+      <!-- File Attachments -->
+      <div class="flex flex-col gap-2">
+        <label class="text-xs font-semibold text-slate-600">ไฟล์แนบ</label>
+        <div id="hw-existing-attachments" class="attach-list"></div>
+        <div id="hw-pending-attachments" class="attach-list"></div>
+        <label class="flex items-center justify-center gap-2 py-2.5 border-2 border-dashed border-slate-200 rounded-2xl text-xs text-slate-400 cursor-pointer hover:border-primary hover:text-primary hover:bg-primary-light transition-all duration-200">
+          <input type="file" id="hw-file-input" multiple class="hidden"/>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          แนบไฟล์
+        </label>
+      </div>
+      <div class="flex justify-end gap-2.5 pt-1 border-t border-slate-100 mt-1">
+        <button type="button" class="btn-ghost" id="hw-cancel-btn-2" onclick="document.getElementById('hw-cancel-btn').click()">ยกเลิก</button>
+        <button type="submit" id="hw-save-btn" class="btn-primary">บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ░░ SUBJECT MANAGER Modal (Admin) ░░ -->
+<div id="subject-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-md mx-4">
+    <div class="modal-header">
+      <h3 class="modal-title">จัดการวิชาเรียน</h3>
+      <button class="modal-close-btn" id="close-subject-modal-btn" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-5 flex flex-col gap-4">
+      <div class="flex gap-2">
+        <input type="text" id="new-subject-input" class="form-input flex-1" placeholder="ชื่อวิชา เช่น คณิตศาสตร์..." maxlength="60"/>
+        <button id="add-subject-btn" class="btn-primary shrink-0">เพิ่ม</button>
+      </div>
+      <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">⚠️ การ "ซ่อน" วิชาจะไม่ลบการบ้านเดิม เพียงซ่อนจาก Dropdown เท่านั้น</p>
+      <div id="subject-list" class="flex flex-col gap-1.5 max-h-72 overflow-y-auto" role="list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ PERSONAL TASK Modal (User) ░░ -->
+<div id="personal-task-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-md mx-4">
+    <div class="modal-header">
+      <h3 id="pt-modal-title" class="modal-title">เพิ่มงานส่วนตัว</h3>
+      <button class="modal-close-btn" id="pt-cancel-btn" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form id="pt-form" class="p-5 flex flex-col gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-slate-600" for="pt-description">รายละเอียด <span class="text-rose">*</span></label>
+        <textarea id="pt-description" class="form-input resize-none" placeholder="งานที่ต้องทำ..." rows="2" required></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-600" for="pt-subject">วิชา (ไม่บังคับ)</label>
+          <select id="pt-subject" class="form-input">
+            <option value="">-- ไม่ระบุวิชา --</option>
+          </select>
+          <!-- Custom Subject Input (hidden by default) -->
+          <input type="text" id="pt-subject-custom" class="form-input mt-1.5 hidden animate-fade-in" placeholder="ระบุชื่อวิชาอื่น ๆ..." />
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <label class="text-xs font-semibold text-slate-600" for="pt-due-date">วันส่ง (ไม่บังคับ)</label>
+          <input type="date" id="pt-due-date" class="form-input"/>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2.5 pt-1 border-t border-slate-100">
+        <button type="button" class="btn-ghost" onclick="document.getElementById('pt-cancel-btn').click()">ยกเลิก</button>
+        <button type="submit" id="pt-save-btn" class="btn-primary">บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ░░ EDIT STUDENT Modal ░░ -->
+<div id="edit-student-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-sm mx-4">
+    <div class="modal-header">
+      <h3 class="modal-title">แก้ไขข้อมูลนักเรียน</h3>
+      <button class="modal-close-btn" id="close-edit-student-modal" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <form id="edit-student-form" class="p-5 flex flex-col gap-3">
+      <input type="hidden" id="edit-student-id"/>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-slate-600">ชื่อ</label>
+        <input type="text" id="edit-student-first" class="form-input" required/>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-slate-600">นามสกุล</label>
+        <input type="text" id="edit-student-last" class="form-input" required/>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="text-xs font-semibold text-slate-600">ชื่อเล่น</label>
+        <input type="text" id="edit-student-nickname" class="form-input"/>
+      </div>
+      <div class="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+        <button type="button" class="btn-ghost" onclick="document.getElementById('close-edit-student-modal').click()">ยกเลิก</button>
+        <button type="submit" class="btn-primary">บันทึก</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ░░ EXCEL IMPORT PREVIEW Modal ░░ -->
+<div id="import-preview-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-lg mx-4">
+    <div class="modal-header">
+      <h3 class="modal-title">ตรวจสอบข้อมูลก่อนนำเข้า</h3>
+    </div>
+    <div class="p-5 flex flex-col gap-4">
+      <div class="flex gap-4">
+        <div class="flex-1 bg-emerald-light border border-emerald/20 rounded-2xl p-4 text-center">
+          <div id="import-new-count" class="text-2xl font-bold text-emerald">0</div>
+          <div class="text-xs text-emerald/70 mt-1">รายการใหม่</div>
+        </div>
+        <div class="flex-1 bg-amber-light border border-amber/20 rounded-2xl p-4 text-center">
+          <div id="import-duplicate-count" class="text-2xl font-bold text-amber">0</div>
+          <div class="text-xs text-amber/70 mt-1">รายการซ้ำ</div>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500">รายการที่ซ้ำ — เลือกรายการที่ต้องการเขียนทับ (Overwrite):</p>
+      <div id="import-duplicate-list" class="max-h-48 overflow-y-auto flex flex-col gap-1.5 pr-1"></div>
+      <div class="flex justify-end gap-2.5 pt-1 border-t border-slate-100">
+        <button id="import-preview-cancel" class="btn-ghost">ยกเลิก</button>
+        <button id="import-preview-confirm" class="btn-primary">นำเข้าข้อมูล</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- 🔔 Floating Notification Bell Button & Popover -->
+  <div id="floating-notif-bell-container" class="hidden fixed bottom-8 right-8 z-[999]">
+    <!-- Popover Panel -->
+    <div id="bell-popover-panel" class="hidden absolute bottom-14 right-0 w-[22rem] sm:w-[26rem] bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-slate-200/80 dark:border-slate-800/80 rounded-3xl shadow-2xl p-4 flex flex-col gap-3 animate-fade-in z-50">
+      
+      <!-- Popover Header -->
+      <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+        <span id="bell-title-text" class="font-bold text-slate-800 dark:text-slate-200 text-sm flex items-center gap-1.5">
+          🔔 การแจ้งเตือน
+        </span>
+        <div class="flex items-center gap-2">
+          <!-- Mark All As Read Button -->
+          <button id="bell-mark-all-read-btn" class="text-xs font-semibold text-primary hover:text-primary-dark dark:text-primary-neon dark:hover:text-primary transition-all flex items-center gap-1 cursor-pointer" title="ทำเครื่องหมายว่าอ่านแล้วทั้งหมด">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+              <polyline points="15 6 9 12 7 10"></polyline>
+            </svg>
+            <span>อ่านทั้งหมด</span>
+          </button>
+          
+          <span id="bell-mark-all-read-divider" class="w-[1px] h-3.5 bg-slate-200 dark:bg-slate-800"></span>
+          
+          <!-- Toggle settings inside popover -->
+          <button id="bell-settings-toggle-btn" class="text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-350 transition-all cursor-pointer" title="ตั้งค่าการแจ้งเตือน">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Notifications List Container -->
+      <div id="bell-notif-list" class="max-h-[300px] sm:max-h-[360px] overflow-y-auto flex flex-col gap-1.5 pr-1">
+        <!-- Rendered dynamically -->
+        <div class="flex flex-col items-center justify-center py-12 text-slate-400 text-center">
+          <span class="text-3xl mb-2">🔔</span>
+          <p class="text-xs">ไม่มีการแจ้งเตือนในขณะนี้</p>
+        </div>
+      </div>
+
+      <!-- Collapsible Quick Settings Drawer -->
+      <div id="bell-settings-drawer" class="hidden border-t border-slate-150/50 dark:border-slate-800/60 pt-3 flex flex-col gap-3 animate-slide-up bg-slate-50/60 dark:bg-slate-950/60 -mx-4 -mb-4 p-4 rounded-b-[1.7rem]">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1">
+            ⚙️ ตั้งค่าเตือนงานค้าง
+          </span>
+          <span id="bell-saving-indicator" class="text-[9px] text-emerald-500 font-semibold opacity-0 transition-all duration-300">⏳ บันทึกเรียบร้อย</span>
+        </div>
+        
+        <!-- Status Toggle Card -->
+        <div class="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 shadow-sm hover:border-slate-200/50 dark:hover:border-slate-700 transition-all">
+          <div class="flex flex-col">
+            <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">ส่งแจ้งเตือนหาฉัน</span>
+            <span class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">รับข้อความพุชสรุปงานค้าง</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer select-none">
+            <input type="checkbox" id="bell-notif-toggle" class="sr-only peer">
+            <div class="w-9 h-5 bg-slate-200 dark:bg-slate-850 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 dark:after:border-slate-650 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+          </label>
+        </div>
+
+        <!-- Detailed settings sub-group -->
+        <div id="bell-notif-settings-group" class="flex flex-col gap-3 transition-all duration-300">
+          <!-- Day selector -->
+          <div class="flex flex-col gap-1.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 shadow-sm">
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">วันส่งการแจ้งเตือน</span>
+            <div class="flex justify-between gap-1 mt-1.5" id="bell-notif-days-container">
+              <button type="button" class="bell-day-btn w-8 h-8 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:scale-105 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-750" data-day="1" title="วันจันทร์">จ</button>
+              <button type="button" class="bell-day-btn w-8 h-8 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:scale-105 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-750" data-day="2" title="วันอังคาร">อ</button>
+              <button type="button" class="bell-day-btn w-8 h-8 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:scale-105 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-750" data-day="3" title="วันพุธ">พ</button>
+              <button type="button" class="bell-day-btn w-8 h-8 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:scale-105 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-750" data-day="4" title="วันพฤหัสบดี">พฤ</button>
+              <button type="button" class="bell-day-btn w-8 h-8 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:scale-105 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-750" data-day="5" title="วันศุกร์">ศ</button>
+              <button type="button" class="bell-day-btn w-8 h-8 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:scale-105 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-750" data-day="6" title="วันเสาร์">ส</button>
+              <button type="button" class="bell-day-btn w-8 h-8 rounded-xl text-xs font-bold border transition-all flex items-center justify-center cursor-pointer bg-white text-slate-500 border-slate-200 hover:bg-slate-50 hover:scale-105 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-750" data-day="0" title="วันอาทิตย์">อา</button>
+            </div>
+          </div>
+
+          <!-- Time selector Trigger Row -->
+          <div id="bell-time-trigger-row" class="flex items-center justify-between bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-3 shadow-sm hover:border-slate-200/50 dark:hover:border-slate-700 hover:scale-[1.01] active:scale-95 transition-all cursor-pointer">
+            <div class="flex flex-col shrink-0">
+              <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">เวลาส่งสรุป</span>
+              <span class="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">เวลาจัดส่งข้อความเตือน</span>
+            </div>
+            <div class="flex items-center gap-1.5 select-none">
+              <!-- Current Selected Time Badge -->
+              <span id="bell-time-display-badge" class="px-2.5 py-1 bg-primary-light dark:bg-primary/20 text-primary dark:text-primary-neon font-bold text-xs rounded-xl border border-primary/10 dark:border-primary/30">18:00</span>
+              <!-- Chevron Icon -->
+              <svg class="w-4 h-4 text-slate-400 dark:text-slate-550" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bell Button itself -->
+    <button id="floating-bell-btn" class="w-12 h-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer text-slate-600 dark:text-slate-400 hover:text-primary dark:hover:text-primary relative" title="การแจ้งเตือน">
+      <!-- Bell SVG -->
+      <svg id="bell-icon-svg" class="w-5 h-5 transition-transform duration-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+      </svg>
+      <!-- Badge for Pending Work Count -->
+      <span id="bell-badge-count" class="hidden absolute -top-1 -right-1 bg-rose text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border border-white">0</span>
+    </button>
+  </div>
+
+<!-- ░░ BELL TIME PICKER Modal ░░ -->
+<div id="bell-time-picker-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-sm mx-4 shadow-2xl border border-slate-100 dark:border-slate-800/80 dark:bg-slate-900/95">
+    <!-- Header -->
+    <div class="modal-header bg-slate-50/40 dark:bg-slate-950/20">
+      <h3 class="modal-title flex items-center gap-2">
+        <span class="text-xl">🕒</span>
+        <span class="font-bold text-slate-900 dark:text-white">เวลาจัดส่งข้อความเตือน</span>
+      </h3>
+      <button class="modal-close-btn" id="close-bell-time-modal" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    
+    <!-- Content -->
+    <div class="p-5 flex flex-col gap-5 bg-slate-50/50 dark:bg-slate-900/20">
+      <!-- Popular Times Grid -->
+      <div class="flex flex-col gap-2">
+        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">ช่วงเวลายอดนิยม</span>
+        <div class="grid grid-cols-4 gap-2">
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="07:00">07:00</button>
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="12:00">12:00</button>
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="17:00">17:00</button>
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="18:00">18:00</button>
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="19:00">19:00</button>
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="20:00">20:00</button>
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="21:00">21:00</button>
+          <button type="button" class="bell-preset-time-btn py-2 text-xs font-bold bg-white border border-slate-200 text-slate-700 rounded-xl hover:border-primary hover:text-primary hover:bg-primary-light/20 transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:text-slate-350 dark:hover:bg-primary/20 dark:hover:text-primary dark:hover:border-primary" data-time="22:00">22:00</button>
+        </div>
+      </div>
+      
+      <!-- Custom Picker Section -->
+      <div class="flex flex-col gap-2 bg-white dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 shadow-sm">
+        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-center">ระบุเวลาด้วยตนเอง</span>
+        
+        <!-- Keyboard Inputs for quick typing -->
+        <div class="flex items-center justify-center gap-2 mt-1.5 mb-2">
+          <input type="text" id="btm-hour-input" class="w-12 h-10 border border-slate-200 dark:border-slate-800 rounded-xl text-center font-bold text-lg text-primary dark:text-indigo-400 dark:bg-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="18" maxlength="2" inputmode="numeric" pattern="[0-9]*">
+          <span class="text-lg font-bold text-slate-400 dark:text-slate-600">:</span>
+          <input type="text" id="btm-min-input" class="w-12 h-10 border border-slate-200 dark:border-slate-800 rounded-xl text-center font-bold text-lg text-primary dark:text-indigo-400 dark:bg-slate-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all" placeholder="00" maxlength="2" inputmode="numeric" pattern="[0-9]*">
+        </div>
+
+        <div class="flex items-center justify-center gap-6 mt-1">
+          
+          <!-- Hour List -->
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500">ชั่วโมง</span>
+            <div id="btm-hour-scroll" class="w-16 h-40 overflow-y-auto border border-slate-200/80 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/60 flex flex-col scrollbar-thin py-1 scroll-smooth">
+              <!-- Generated 00-23 -->
+            </div>
+          </div>
+          
+          <!-- Colon -->
+          <span class="text-2xl font-black text-slate-300 dark:text-slate-700 select-none animate-pulse">:</span>
+          
+          <!-- Minute List -->
+          <div class="flex flex-col items-center gap-1">
+            <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500">นาที</span>
+            <div id="btm-min-scroll" class="w-16 h-40 overflow-y-auto border border-slate-200/80 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-900/60 flex flex-col scrollbar-thin py-1 scroll-smooth">
+              <!-- Generated 00-59 -->
+            </div>
+          </div>
+          
+        </div>
+      </div>
+      
+      <!-- Footer Buttons -->
+      <div class="flex gap-2.5 border-t border-slate-100 dark:border-slate-800 pt-3">
+        <button id="btm-cancel" class="btn-ghost flex-1 py-2.5 rounded-xl font-bold dark:text-slate-400 dark:hover:bg-slate-800">ยกเลิก</button>
+        <button id="btm-save" class="btn-primary flex-1 py-2.5 rounded-xl font-bold shadow-md hover:scale-[1.01] transition-all">บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ NOTIFICATION DETAIL Modal ░░ -->
+<div id="notification-detail-modal" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal-box w-full max-w-md mx-4 dark:border-slate-800/80 dark:bg-slate-900/95">
+    <div class="modal-header dark:border-slate-800/80">
+      <h3 class="modal-title flex items-center gap-2">
+        <span id="ndm-icon" class="text-xl">📢</span>
+        <span id="ndm-title" class="font-bold text-slate-900 dark:text-white">หัวข้อแจ้งเตือน</span>
+      </h3>
+      <button class="modal-close-btn" id="close-notification-detail-modal" aria-label="ปิด">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+    <div class="p-6 flex flex-col gap-4">
+      <p id="ndm-body" class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed whitespace-pre-wrap font-medium"></p>
+      
+      <div class="flex justify-between items-center text-xs text-slate-400 border-t border-slate-100 dark:border-slate-800/80 pt-3">
+        <span id="ndm-time">🕒 เมื่อครู่นี้</span>
+        <span id="ndm-type" class="px-2 py-0.5 rounded-lg font-semibold uppercase tracking-wider text-[10px]">ประกาศจากห้องเรียน</span>
+      </div>
+      
+      <div class="flex justify-end pt-2">
+        <button id="ndm-close" class="btn-primary w-full py-2.5 rounded-xl font-bold shadow-md hover:scale-[1.01] transition-all cursor-pointer">ตกลง</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ░░ Mobile Sidebar Drawer Backdrop ░░ -->
+<div id="mobile-sidebar-backdrop" class="hidden fixed inset-0 bg-slate-950/40 backdrop-blur-xs z-[990]"></div>
+
+<!-- ░░ Mobile Sidebar Drawer ░░ -->
+<div id="mobile-sidebar" class="fixed inset-y-0 left-0 z-[1000] w-72 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border-r border-slate-200 dark:border-slate-800 flex flex-col transform -translate-x-full transition-transform duration-300 ease-in-out">
+  <!-- Sidebar Header -->
+  <div class="h-16 px-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet flex items-center justify-center shadow-md">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+        </svg>
+      </div>
+      <span class="font-semibold text-slate-800 dark:text-slate-200 text-sm">Homework Tracker</span>
+    </div>
+    <button id="mobile-sidebar-close-btn" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-all" aria-label="ปิดเมนู">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+  
+  <!-- Sidebar Content (Nav Links) -->
+  <nav class="flex-1 px-4 py-6 flex flex-col gap-2">
+    <button id="mobile-nav-dashboard-btn" class="mobile-nav-btn active flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 text-left w-full text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+      </svg>
+      Dashboard
+    </button>
+    <button id="mobile-nav-calendar-btn" class="mobile-nav-btn flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 text-left w-full text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line>
+      </svg>
+      ปฏิทินการบ้าน
+    </button>
+    <button id="mobile-nav-admin-btn" class="mobile-nav-btn hidden admin-only flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200 text-left w-full text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      จัดการระบบ
+    </button>
+    
+    <!-- Divider inside sidebar -->
+    <div class="h-[1px] bg-slate-100 dark:bg-slate-850 my-2"></div>
+    
+    <!-- Admin Quick Actions in Sidebar -->
+    <div class="admin-only hidden flex flex-col gap-2">
+      <span class="px-4 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">เมนูจัดการระบบด่วน</span>
+      <button id="mobile-open-subject-btn" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 text-left w-full">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+        จัดการวิชา
+      </button>
+      <button id="mobile-open-add-hw-btn" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 text-left w-full">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        เพิ่มการบ้าน
+      </button>
+    </div>
+  </nav>
+  
+  <!-- Sidebar Footer (Profile / Logout) -->
+  <div class="p-4 border-t border-slate-100 dark:border-slate-800 flex flex-col gap-2">
+    <button id="mobile-sidebar-profile-btn" class="flex items-center gap-3 px-3 py-2.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-200 text-left w-full cursor-pointer">
+      <div id="mobile-sidebar-avatar" class="flex-shrink-0"></div>
+      <div class="flex flex-col min-w-0">
+        <span id="mobile-sidebar-name" class="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate"></span>
+        <span class="text-[10px] text-slate-400 dark:text-slate-500">ดูโปรไฟล์ของคุณ</span>
+      </div>
+    </button>
+    <button id="mobile-sidebar-signout-btn" class="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-medium text-slate-500 hover:text-rose hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all duration-200 text-left w-full">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+        <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      ออกจากระบบ
+    </button>
+  </div>
+</div>
+
+<!-- ░░ Scripts ░░ -->
+<script type="module" src="js/app.js?v=1.1.0"></script>
+</body>
+</html>

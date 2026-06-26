@@ -1,0 +1,21 @@
+{
+  "name": "Homework App",
+  "short_name": "HW App",
+  "description": "ระบบจัดการการบ้าน",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
