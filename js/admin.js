@@ -13,7 +13,7 @@ import {
   exportSystemData, importSystemData,
   subscribeNotifications, deleteNotification, deleteMultipleNotifications
 } from "./firebase.js";
-import { isSuperAdmin, getUid, canImpersonate } from "./auth.js";
+import { isSuperAdmin, getUid, canImpersonate } from "./auth.js?v=2";
 import {
   showToast, showConfirm, showAlert, setButtonLoading,
   getRoleLabel, getRoleBadgeClass, formatDate, renderAvatarHTML, debounce

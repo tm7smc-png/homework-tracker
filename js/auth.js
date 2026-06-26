@@ -3,7 +3,7 @@
 // ============================================================
 
 import {
-  GoogleAuthProvider, signInWithPopup, signInWithRedirect,
+  GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
   signOut as _signOut, onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
@@ -124,6 +124,12 @@ export async function signOut() {
  */
 export function initAuth(onSignedIn, onNeedsOnboarding, onSignedOut) {
   if (_unsubscribeAuth) _unsubscribeAuth();
+  
+  // Catch redirect result for mobile browsers to ensure login completes
+  getRedirectResult(auth).catch(err => {
+    console.error("Redirect login error:", err);
+  });
+
   _unsubscribeAuth = onAuthStateChanged(auth, async user => {
     if (!user) {
       _user = null; _userData = null;
