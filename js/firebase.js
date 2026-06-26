@@ -409,6 +409,10 @@ export async function addComment(hwId, uid, displayName, text) {
   });
 }
 
+export async function deleteComment(hwId, commentId) {
+  await deleteDoc(ref(`homeworks/${hwId}/comments`, commentId));
+}
+
 // ══════════════════════════════════════════════════════════
 //  PERSONAL TASKS  personalTasks/{uid}/items/{taskId}
 // ══════════════════════════════════════════════════════════

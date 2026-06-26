@@ -8,7 +8,7 @@ import {
   addSubject, softDeleteSubject, restoreSubject, updateSubject, deleteSubjectRecord,
   setCompletion, savePersonalNote, addPersonalTask, updatePersonalTask,
   togglePersonalTask, deletePersonalTask, uploadFileToDrive,
-  subscribeComments, addComment,
+  subscribeComments, addComment, deleteComment,
   requestAndSaveNotificationPermission, triggerPushNotification,
   subscribeNotifications, subscribeReadNotifications,
   markNotificationAsRead, markAllNotificationsAsRead,
@@ -1795,8 +1795,9 @@ window.openCommentModal = (hw) => {
         
         div.innerHTML = `
           ${!isMe ? `<span class="text-[10px] text-slate-500 mb-0.5 ml-1">${c.displayName}</span>` : ''}
-          <div class="px-3 py-2 rounded-2xl text-sm ${isMe ? 'bg-primary text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'}">
+          <div class="px-3 py-2 rounded-2xl text-sm ${isMe ? 'bg-primary text-white rounded-br-none' : 'bg-white border border-slate-200 text-slate-800 rounded-bl-none'} relative group">
             ${c.text}
+            ${isAdmin() ? `<button data-delete-comment="${c.id}" class="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>` : ''}
           </div>
           <span class="text-[9px] text-slate-400 mt-0.5 ${isMe ? 'mr-1' : 'ml-1'}">${timeStr}</span>
         `;
@@ -1807,6 +1808,21 @@ window.openCommentModal = (hw) => {
     }
   });
 };
+
+// Global listener for deleting comments
+document.getElementById('comment-list')?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-delete-comment]');
+  if (btn) {
+    if (!confirm('ยืนยันการลบคอมเมนต์นี้?')) return;
+    const commentId = btn.dataset.deleteComment;
+    const hwId = document.getElementById('comment-hw-id').value;
+    try {
+      await deleteComment(hwId, commentId);
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+});
 
 document.getElementById('close-comment-modal-btn')?.addEventListener('click', () => {
   if (currentCommentUnsub) { currentCommentUnsub(); currentCommentUnsub = null; }
